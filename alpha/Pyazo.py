@@ -73,7 +73,7 @@ def up2Dropbox(now_time):
         client.put_file(now_time+".png",f)
         f.close()
         print webbrowser.open(client.share(now_time+".png")["url"])
-        print "always done."
+        print "all done."
 
 class myFrame(wx.Frame):
 	def __init__(self, parent, title):
@@ -91,6 +91,7 @@ class myFrame(wx.Frame):
 		self.Cpoint = event.GetPosition()
 
 	def LeftUp(self, event): # 左マウスボタンを放した時
+                self.SetTransparent(0)
 		x, y = event.GetPosition()
 		x2, y2 = self.Cpoint
 		now_time = str(int(time.time())) # 時間ゲットしてunixtimeに変換
