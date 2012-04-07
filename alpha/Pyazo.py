@@ -8,6 +8,35 @@ import ctypes
 import ImageGrab
 import dropbox
 
+# Code from
+# http://blenderscripts.googlecode.com/svn-history/r41/trunk/scripts/sketch_export.py
+def copy_to_clipboard(text):
+	# =============================================================================
+	# win32 (Windows)
+	try:
+		import win32clipboard
+		win32clipboard.OpenClipboard()
+		win32clipboard.EmptyClipboard()
+		win32clipboard.SetClipboardText(text)
+		win32clipboard.CloseClipboard()
+		return True
+	except:
+		pass
+
+	# =============================================================================
+	# clip (Windows)
+	try:
+		import subprocess
+		p = subprocess.Popen(['clip'], stdin=subprocess.PIPE)
+		p.stdin.write(text)
+		p.stdin.close()
+		retcode = p.wait()
+		return True
+	except:
+		pass
+	
+	return False
+
 def getResolution(): # 解像度を取得
 	x = ctypes.windll.user32.GetSystemMetrics(0)
 	y = ctypes.windll.user32.GetSystemMetrics(1)
@@ -72,8 +101,7 @@ def up2Dropbox(now_time):
         f = open("temp.png","rb")
         client.put_file(now_time+".png",f)
         f.close()
-        print webbrowser.open(client.share(now_time+".png")["url"])
-        print "all done."
+        return client.share(now_time+".png")["url"]
 
 class myFrame(wx.Frame):
 	def __init__(self, parent, title):
@@ -91,13 +119,15 @@ class myFrame(wx.Frame):
 		self.Cpoint = event.GetPosition()
 
 	def LeftUp(self, event): # 左マウスボタンを放した時
-                self.SetTransparent(0)
+		self.SetTransparent(0)
 		x, y = event.GetPosition()
 		x2, y2 = self.Cpoint
 		now_time = str(int(time.time())) # 時間ゲットしてunixtimeに変換
 		img = ImageGrab.grab((min(x,x2),min(y,y2),max(x,x2),max(y,y2)))
 		img.save("temp.png")
-		up2Dropbox(now_time)
+		url = up2Dropbox(now_time)
+		webbrowser.open(url)
+		copy_to_clipboard(url)
 		self.Close()
 		
 	def RightUp(self, event): # 右マウスボタンを放した時(キャンセル終了用)
