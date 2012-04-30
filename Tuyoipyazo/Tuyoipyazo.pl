@@ -18,9 +18,11 @@ exit(0);
 package Tuyoipyazo::MainFrame;
 use 5.10.0;
 use vars qw($B $C $D);
+use Config::Tiny;
 use Win32::API;
 use Win32::API::Callback;
 use Win32::API::Struct;
+use Win32::Screenshot;
 use Wx qw(:everything);
 use base qw(Wx::Frame);
 use constant SM_XVIRTUALSCREEN =>76;
@@ -36,6 +38,7 @@ use constant N_DRAG_MOVE =>1;
 
 BEGIN
 {
+	$C = Config::Tiny->read("Tuyoipyazo.conf") // Config::Tiny->new();
 	$D = {};
 
 	Win32::API->Import(qw(USER32 ClientToScreen NS N));
@@ -209,6 +212,30 @@ sub new
 		return();
 	}
 
+	sub onLeftDoubleClick
+	{
+		my $s = shift();
+		my $e = shift();
+
+		my @geom = (
+			($s->GetParent() // $s)->{Mask}->GetRect()->x() + ($s->GetParent() ? $s->GetParent()->GetPosition()->x() : 0),
+			($s->GetParent() // $s)->{Mask}->GetRect()->y() + ($s->GetParent() ? $s->GetParent()->GetPosition()->y() : 0),
+			($s->GetParent() // $s)->{Mask}->GetRect()->width(),
+			($s->GetParent() // $s)->{Mask}->GetRect()->height(),
+		);
+		($s->GetParent() // $s)->Show(0);
+		#my $bin = Win32::Screenshot::CaptureRect(@geom)->ImageToBlob(magick =>"jpg");
+		my $bin = Win32::Screenshot::CaptureRect($geom[0],$geom[1],$geom[2],$geom[3])->ImageToBlob(magick =>"jpg");
+		printf("Captured(): %dx%d+%d+%d\n",@geom[2,3,0,1]);
+
+		my $sub = require("libdropbox.pl");
+		while($sub->(\$bin,"jpg")){
+		}
+
+		($s->GetParent() // $s)->Close();
+		return();
+	}
+
 	sub onRightDown
 	{
 		my $s = shift();
@@ -308,6 +335,7 @@ sub new
 	$s->{Mask}->Wx::Event::EVT_KEY_DOWN(\&onKeyDown);
 	$s->{Mask}->Wx::Event::EVT_LEFT_DOWN(\&onLeftDown);
 	$s->{Mask}->Wx::Event::EVT_LEFT_UP(\&onLeftUp);
+	$s->{Mask}->Wx::Event::EVT_LEFT_DCLICK(\&onLeftDoubleClick);
 	$s->{Mask}->Wx::Event::EVT_RIGHT_DOWN(\&onRightDown);
 	$s->{Mask}->Wx::Event::EVT_MOTION(\&onMouseMove);
 
