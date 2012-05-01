@@ -22,6 +22,7 @@ use Config::Tiny;
 use Win32::API;
 use Win32::API::Callback;
 use Win32::API::Struct;
+use Win32::Clipboard;
 use Win32::Screenshot;
 use Wx qw(:everything);
 use base qw(Wx::Frame);
@@ -229,8 +230,12 @@ sub new
 		printf("Captured(): %dx%d+%d+%d\n",@geom[2,3,0,1]);
 
 		my $sub = require("libdropbox.pl");
-		while($sub->(\$bin,"jpg")){
-		}
+		do{
+			my($r,@r) = $sub->(\$bin,"jpg");
+			if(defined($r[0])){
+				Win32::Clipboard->new()->Set($r[0]);
+			}
+		}while($r);
 
 		($s->GetParent() // $s)->Close();
 		return();

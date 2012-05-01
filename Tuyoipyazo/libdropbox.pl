@@ -20,9 +20,7 @@ sub
 	if($B->{WebService::Dropbox}->account_info()){
 		$B->{WebService::Dropbox}->root("sandbox");
 		$B->{WebService::Dropbox}->files_put(my $fn = sprintf("%d_%s.%s",time(),Digest::MD5::md5_hex(${$bin}),$ext),${$bin});
-		$B->{WebService::Dropbox}->shares($fn);
-		print $B->{WebService::Dropbox}->shares($fn)->{url}."\n";
-	return;
+		return(0,($B->{WebService::Dropbox}->shares($fn) // {})->{url});
 	}else{
 		Win32::FileOp::ShellExecute($B->{WebService::Dropbox}->login());
 		if(Wx::MessageBox(
