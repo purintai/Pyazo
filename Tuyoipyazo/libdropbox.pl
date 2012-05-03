@@ -22,7 +22,8 @@ sub
 		$B->{WebService::Dropbox}->files_put(my $fn = sprintf("%d_%s.%s",time(),Digest::MD5::md5_hex(${$bin}),$ext),${$bin});
 		return(0,($B->{WebService::Dropbox}->shares($fn) // {})->{url});
 	}else{
-		Win32::FileOp::ShellExecute($B->{WebService::Dropbox}->login());
+		#Win32::FileOp::ShellExecute($B->{WebService::Dropbox}->login());
+		Win32::API->new(qw(SHELL32 ShellExecute NPPPPN N))->Call(0,"open",$B->{WebService::Dropbox}->login(),0,0,0);
 		if(Wx::MessageBox(
 			"",
 			__PACKAGE__,
